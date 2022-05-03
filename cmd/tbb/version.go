@@ -7,9 +7,9 @@ import (
 )
 
 const Major = "0"
-const Minor = "4"
+const Minor = "5"
 const Fix = "0"
-const Verbal = "Blockchain"
+const Verbal = "Flexible Database"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
