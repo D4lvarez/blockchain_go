@@ -13,6 +13,10 @@ func NewTx(from Account, to Account, value uint, data string) Tx {
 	return Tx{from, to, value, data}
 }
 
+func NewAccount(name string) Account {
+	return Account(name)
+}
+
 func (t Tx) IsReward() bool {
 	return t.Data == "reward"
 }
