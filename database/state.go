@@ -12,8 +12,10 @@ type State struct {
 	Balances  map[Account]uint
 	txMempool []Tx
 
-	dbFile          *os.File
+	dbFile *os.File
+
 	latestBlockHash Hash
+	latestBlock     Block
 }
 
 func NewStateFromDisk(dataDir string) (*State, error) {
@@ -48,6 +50,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 		make([]Tx, 0),
 		f,
 		Hash{},
+		Block{},
 	}
 
 	for scanner.Scan() {
@@ -56,6 +59,11 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 		}
 
 		blockFsJson := scanner.Bytes()
+
+		if len(blockFsJson) == 0 {
+			break
+		}
+
 		var blockFs BlockFS
 		err = json.Unmarshal(blockFsJson, &blockFs)
 		if err != nil {
@@ -67,6 +75,7 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 			return nil, err
 		}
 
+		state.latestBlock = blockFs.Value
 		state.latestBlockHash = blockFs.Key
 	}
 
@@ -76,6 +85,11 @@ func NewStateFromDisk(dataDir string) (*State, error) {
 // Get Last block Hash
 func (s *State) LatestBlockHash() Hash {
 	return s.latestBlockHash
+}
+
+// Get Last block
+func (s *State) LatestBlock() Block {
+	return s.latestBlock
 }
 
 // Add Blocks
@@ -101,9 +115,15 @@ func (s *State) AddTx(tx Tx) error {
 
 // Save Txs on Disk
 func (s *State) Persist() (Hash, error) {
+	latestBlockHash, err := s.latestBlock.Hash()
+	if err != nil {
+		return Hash{}, err
+	}
+
 	// Create New block
 	block := NewBlock(
-		s.latestBlockHash,
+		latestBlockHash,
+		s.latestBlock.Header.Number+1,
 		uint64(time.Now().Unix()),
 		s.txMempool,
 	)
@@ -132,10 +152,11 @@ func (s *State) Persist() (Hash, error) {
 		return Hash{}, err
 	}
 
-	s.latestBlockHash = blockHash
+	s.latestBlock = block
+	s.latestBlockHash = latestBlockHash
 	s.txMempool = []Tx{}
 
-	return s.latestBlockHash, nil
+	return latestBlockHash, nil
 }
 
 // Close file
