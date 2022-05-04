@@ -6,10 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const Major = "0"
+const Major = "1"
 const Minor = "5"
 const Fix = "0"
-const Verbal = "Flexible Database"
+const Verbal = "Add Migrate Command"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
